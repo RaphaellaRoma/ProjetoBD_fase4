@@ -20,22 +20,29 @@ def janela_cli_loja():
             lojas = cur.fetchall()
             cb_loja['values'] = [f"{t[0]} - {t[1]}" for t in lojas]
 
+            cb_filtro_cliente['values'] = cb_cliente['values']
+            cb_filtro_loja['values'] = cb_loja['values']
+
             cur.close()
             conn.close()
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
-    def carregar_dados(filtro=None):
+    def carregar_dados(cliente_id=None, loja_id=None):
         for item in tree.get_children():
             tree.delete(item)
         try:
             conn = conectar()
             cur = conn.cursor()
-            if filtro:
+            if cliente_id and loja_id:
                 cur.execute("""
                     SELECT * FROM amazon.cli_avalia_loja 
-                    WHERE CAST(LojaID AS TEXT) LIKE %s
-                """, (f"{filtro}%",))
+                    WHERE clienteid = %s AND lojaid = %s
+                """, (cliente_id, loja_id))
+            elif cliente_id:
+                cur.execute("SELECT * FROM amazon.cli_avalia_loja WHERE clienteid = %s", (cliente_id,))
+            elif loja_id:
+                cur.execute("SELECT * FROM amazon.cli_avalia_loja WHERE lojaid = %s", (loja_id,))
             else:
                 cur.execute("SELECT * FROM amazon.cli_avalia_loja")
             for row in cur.fetchall():
@@ -97,9 +104,25 @@ def janela_cli_loja():
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
-    def filtrar_avaliacoes(event=None):
-        termo = entry_filtro.get()
-        carregar_dados(termo)
+    def filtrar_avaliacoes():
+        cliente = cb_filtro_cliente.get()
+        loja = cb_filtro_loja.get()
+
+        cliente_id = None
+        loja_id = None
+
+        if cliente:
+            try:
+                cliente_id = int(cliente.split(" - ")[0])
+            except:
+                pass
+        if loja:
+            try:
+                loja_id = int(loja.split(" - ")[0])
+            except:
+                pass
+
+        carregar_dados(cliente_id, loja_id)
 
     # === Formulário ===
     form_frame = tk.Frame(janela)
@@ -137,10 +160,14 @@ def janela_cli_loja():
     filtro_frame.pack(pady=10)
 
     tk.Label(filtro_frame, text="Filtrar por Cliente:").pack(side=tk.LEFT)
-    entry_filtro = tk.Entry(filtro_frame)
-    entry_filtro.pack(side=tk.LEFT, padx=5)
-    entry_filtro.bind("<KeyRelease>", filtrar_avaliacoes)
-    tk.Button(filtro_frame, text="Buscar", command=filtrar_cliente).pack(side=tk.LEFT)
+    cb_filtro_cliente = ttk.Combobox(filtro_frame, width=30)
+    cb_filtro_cliente.pack(side=tk.LEFT, padx=5)
+
+    tk.Label(filtro_frame, text="Filtrar por Loja:").pack(side=tk.LEFT)
+    cb_filtro_loja = ttk.Combobox(filtro_frame, width=30)
+    cb_filtro_loja.pack(side=tk.LEFT, padx=5)
+
+    tk.Button(filtro_frame, text="Buscar", command=lambda: filtrar_avaliacoes()).pack(side=tk.LEFT)
 
     # === Tabela ===
     colunas = ("ClienteID", "LojaID", "nota", "data", "comentario")
