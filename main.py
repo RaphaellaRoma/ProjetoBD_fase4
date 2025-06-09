@@ -67,8 +67,8 @@ botoes_info = [
     ("Pedidos", abrir_pedido),
     ("Avaliações ( cliente-loja )", abrir_cli_loja),
     ("Avaliações ( cliente-produto )", abrir_cli_prod),
-    ("Quantidade de Produtos", abrir_quant_prod),
-    ("Pedido - Produto", abrir_ped_pod),
+    #("Quantidade de Produtos", abrir_quant_prod),
+    #("Pedido - Produto", abrir_ped_pod),
 ]
 
 # === Criar e posicionar botões ===

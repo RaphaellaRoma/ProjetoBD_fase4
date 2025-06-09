@@ -5,7 +5,7 @@ from db_config import conectar
 def janela_transportadora():
     janela = tk.Toplevel()
     janela.title("Gerenciar Transportadoras")
-    janela.geometry("700x400")
+    janela.geometry("900x500")
 
     def carregar_dados(filtro=None):
         for item in tree.get_children():

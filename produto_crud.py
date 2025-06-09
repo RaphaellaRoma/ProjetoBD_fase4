@@ -5,7 +5,7 @@ from db_config import conectar
 def janela_produto():
     janela = tk.Toplevel()
     janela.title("Gerenciar Produtos")
-    janela.geometry("1000x600")
+    janela.geometry("900x500")
 
     # Função para carregar os dados na tabela (Treeview)
     def carregar_dados(filtro=None):

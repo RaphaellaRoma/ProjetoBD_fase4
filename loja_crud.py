@@ -5,7 +5,7 @@ from db_config import conectar
 def janela_loja():
     janela = tk.Toplevel()
     janela.title("Gerenciar Lojas")
-    janela.geometry("800x500")
+    janela.geometry("900x500")
 
     def carregar_dados(filtro=None):
         for item in tree.get_children():
