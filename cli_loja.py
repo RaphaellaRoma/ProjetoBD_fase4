@@ -56,18 +56,17 @@ def janela_cli_loja():
         nota = entry_nota.get()
         data = entry_data.get()
         comentario = entry_comentario.get()
-
         cliente = cb_cliente.get()
         loja = cb_loja.get()
 
-        if not (nota or data or cliente or loja):
+        if not (nota and data and cliente and loja):
             messagebox.showwarning("Atenção", "Preencha todos os campos obrigatórios.")
             return
 
         try:
             cliente_id = int(cliente.split(" - ")[0])
             loja_id = int(loja.split(" - ")[0])
-        except Exception:
+        except:
             messagebox.showwarning("Erro", "Selecione cliente e loja válidos.")
             return
 
@@ -83,6 +82,8 @@ def janela_cli_loja():
             cur.close()
             conn.close()
             carregar_dados()
+            limpar_campos()
+            messagebox.showinfo("Sucesso", "Avaliação inserida com sucesso.")
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
@@ -101,6 +102,46 @@ def janela_cli_loja():
             cur.close()
             conn.close()
             carregar_dados()
+            limpar_campos()
+            messagebox.showinfo("Sucesso", "Avaliação deletada com sucesso.")
+        except Exception as e:
+            messagebox.showerror("Erro", str(e))
+
+    def atualizar_avaliacao():
+        item = tree.selection()
+        if not item:
+            messagebox.showwarning("Aviso", "Selecione uma avaliação para atualizar.")
+            return
+
+        try:
+            cliente_id = int(cb_cliente.get().split(" - ")[0])
+            loja_id = int(cb_loja.get().split(" - ")[0])
+        except:
+            messagebox.showwarning("Erro", "Selecione cliente e loja válidos.")
+            return
+
+        nota = entry_nota.get()
+        data = entry_data.get()
+        comentario = entry_comentario.get()
+
+        if not (nota and data):
+            messagebox.showwarning("Aviso", "Preencha todos os campos obrigatórios.")
+            return
+
+        try:
+            conn = conectar()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE amazon.cli_avalia_loja 
+                SET nota = %s, data = %s, comentario = %s
+                WHERE clienteid = %s AND lojaid = %s
+            """, (nota, data, comentario, cliente_id, loja_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            carregar_dados()
+            limpar_campos()
+            messagebox.showinfo("Sucesso", "Avaliação atualizada com sucesso.")
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
@@ -123,6 +164,30 @@ def janela_cli_loja():
                 pass
 
         carregar_dados(cliente_id, loja_id)
+
+    def preencher_campos(event):
+        item = tree.selection()
+        if not item:
+            return
+        valores = tree.item(item)["values"]
+        cb_cliente.set(f"{valores[0]}")  # ClienteID
+        cb_loja.set(f"{valores[1]}")     # LojaID
+        entry_nota.delete(0, tk.END)
+        entry_nota.insert(0, valores[2])
+        entry_data.delete(0, tk.END)
+        entry_data.insert(0, valores[3])
+        entry_comentario.delete(0, tk.END)
+        entry_comentario.insert(0, valores[4])
+
+    def limpar_campos():
+        cb_cliente.set("")
+        cb_loja.set("")
+        entry_nota.delete(0, tk.END)
+        entry_data.delete(0, tk.END)
+        entry_comentario.delete(0, tk.END)
+        cb_filtro_cliente.set("")
+        cb_filtro_loja.set("")
+        tree.selection_remove(tree.selection())
 
     # === Formulário ===
     form_frame = tk.Frame(janela)
@@ -153,7 +218,9 @@ def janela_cli_loja():
     btn_frame.pack(pady=10)
 
     tk.Button(btn_frame, text="Inserir Avaliação", command=inserir_avaliacao).pack(side=tk.LEFT, padx=10)
+    tk.Button(btn_frame, text="Atualizar Selecionado", command=atualizar_avaliacao).pack(side=tk.LEFT, padx=10)
     tk.Button(btn_frame, text="Deletar Selecionado", command=deletar_avaliacao).pack(side=tk.LEFT, padx=10)
+    tk.Button(btn_frame, text="Limpar Campos", command=limpar_campos).pack(side=tk.LEFT, padx=10)
 
     # === Filtro ===
     filtro_frame = tk.Frame(janela)
@@ -167,7 +234,7 @@ def janela_cli_loja():
     cb_filtro_loja = ttk.Combobox(filtro_frame, width=30)
     cb_filtro_loja.pack(side=tk.LEFT, padx=5)
 
-    tk.Button(filtro_frame, text="Buscar", command=lambda: filtrar_avaliacoes()).pack(side=tk.LEFT)
+    tk.Button(filtro_frame, text="Buscar", command=filtrar_avaliacoes).pack(side=tk.LEFT)
 
     # === Tabela ===
     colunas = ("ClienteID", "LojaID", "nota", "data", "comentario")
@@ -176,6 +243,9 @@ def janela_cli_loja():
         tree.heading(col, text=col)
         tree.column(col, width=100)
     tree.pack(expand=True, fill=tk.BOTH)
+
+    # Bind para preencher os campos ao selecionar uma linha
+    tree.bind("<<TreeviewSelect>>", preencher_campos)
 
     carregar_clientes_lojas()
     carregar_dados()

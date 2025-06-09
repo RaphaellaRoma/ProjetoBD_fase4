@@ -29,10 +29,9 @@ def abrir_cli_loja():
 def abrir_consultas():
     janela_consultas()
 
-
 root = tk.Tk()
 root.title("Sistema de Gerenciamento - Amazon")
-root.geometry("400x300")
+root.geometry("400x500")
 
 tk.Label(root, text="Menu Principal", font=("Arial", 16)).pack(pady=20)
 
