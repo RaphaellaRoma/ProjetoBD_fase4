@@ -1,3 +1,4 @@
+# Índice de Otimização - Sistema de Pedidos
 
 ### Índice
 - **Nome do Índice:** `idx_pedido_data`
