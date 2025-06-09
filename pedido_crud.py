@@ -35,9 +35,10 @@ def janela_pedido():
                 cur.execute("""
                     SELECT * FROM amazon.pedido 
                     WHERE CAST(PedidoID AS TEXT) LIKE %s
+                    ORDER BY PedidoID
                 """, (f"{filtro}%",))
             else:
-                cur.execute("SELECT * FROM amazon.pedido")
+                cur.execute("SELECT * FROM amazon.pedido ORDER BY PedidoID")
             for row in cur.fetchall():
                 tree.insert("", "end", values=row)
             cur.close()
@@ -45,13 +46,22 @@ def janela_pedido():
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
+    def limpar_campos():
+        entry_formapag.set("")
+        entry_desc.delete(0, tk.END)
+        entry_subtotal.delete(0, tk.END)
+        entry_taxa.delete(0, tk.END)
+        entry_data.delete(0, tk.END)
+        cb_cliente.set("")
+        cb_transportadora.set("")
+        tree.selection_remove(tree.selection())
+
     def inserir_pedido():
         formapag = entry_formapag.get()
         desconto = entry_desc.get()
         subtotal = entry_subtotal.get()
         taxa = entry_taxa.get()
         data = entry_data.get()
-
         cliente = cb_cliente.get()
         transportadora = cb_transportadora.get()
 
@@ -78,6 +88,46 @@ def janela_pedido():
             cur.close()
             conn.close()
             carregar_dados()
+            limpar_campos()
+        except Exception as e:
+            messagebox.showerror("Erro", str(e))
+
+    def atualizar_pedido():
+        item = tree.selection()
+        if not item:
+            messagebox.showwarning("Aviso", "Selecione um pedido para atualizar.")
+            return
+        pedido_id = tree.item(item)["values"][0]
+
+        formapag = entry_formapag.get()
+        desconto = entry_desc.get()
+        subtotal = entry_subtotal.get()
+        taxa = entry_taxa.get()
+        data = entry_data.get()
+        cliente = cb_cliente.get()
+        transportadora = cb_transportadora.get()
+
+        try:
+            cliente_id = int(cliente.split(" - ")[0])
+            transportadora_id = int(transportadora.split(" - ")[0])
+        except Exception:
+            messagebox.showwarning("Erro", "Selecione cliente e transportadora válidos.")
+            return
+
+        try:
+            conn = conectar()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE amazon.pedido 
+                SET FormaDePagam = %s, Desconto = %s, Subtotal = %s, TaxaEntrega = %s,
+                    DataPedFeito = %s, ClienteID = %s, TransportadoraID = %s
+                WHERE PedidoID = %s
+            """, (formapag, desconto, subtotal, taxa, data, cliente_id, transportadora_id, pedido_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            carregar_dados()
+            limpar_campos()
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
@@ -95,12 +145,29 @@ def janela_pedido():
             cur.close()
             conn.close()
             carregar_dados()
+            limpar_campos()
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
     def filtrar_pedidos(event=None):
         termo = entry_filtro.get()
         carregar_dados(termo)
+
+    def preencher_campos(event):
+        item = tree.selection()
+        if item:
+            valores = tree.item(item)["values"]
+            entry_formapag.set(valores[1])
+            entry_desc.delete(0, tk.END)
+            entry_desc.insert(0, valores[2])
+            entry_subtotal.delete(0, tk.END)
+            entry_subtotal.insert(0, valores[3])
+            entry_taxa.delete(0, tk.END)
+            entry_taxa.insert(0, valores[4])
+            entry_data.delete(0, tk.END)
+            entry_data.insert(0, valores[5])
+            cb_cliente.set(f"{valores[6]}")  # cliente_id
+            cb_transportadora.set(f"{valores[7]}")  # transportadora_id
 
     # === Formulário ===
     form_frame = tk.Frame(janela)
@@ -139,7 +206,9 @@ def janela_pedido():
     btn_frame.pack(pady=10)
 
     tk.Button(btn_frame, text="Inserir Pedido", command=inserir_pedido).pack(side=tk.LEFT, padx=10)
+    tk.Button(btn_frame, text="Atualizar Selecionado", command=atualizar_pedido).pack(side=tk.LEFT, padx=10)
     tk.Button(btn_frame, text="Deletar Selecionado", command=deletar_pedido).pack(side=tk.LEFT, padx=10)
+    tk.Button(btn_frame, text="Limpar Campos", command=limpar_campos).pack(side=tk.LEFT, padx=10)
 
     # === Filtro ===
     filtro_frame = tk.Frame(janela)
@@ -157,6 +226,7 @@ def janela_pedido():
     for col in colunas:
         tree.heading(col, text=col)
         tree.column(col, width=100)
+    tree.bind("<<TreeviewSelect>>", preencher_campos)
     tree.pack(expand=True, fill=tk.BOTH)
 
     carregar_clientes_transportadoras()
