@@ -2,6 +2,7 @@
 import tkinter as tk
 from cliente_crud import janela_cliente
 from pedido_crud import janela_pedido
+from transportadora_crud import janela_transportadora
 from consultas import janela_consultas
 
 def abrir_cliente():
@@ -10,8 +11,12 @@ def abrir_cliente():
 def abrir_pedido():
     janela_pedido()
 
+def abrir_transportadora():
+    janela_transportadora()
+
 def abrir_consultas():
     janela_consultas()
+
 
 root = tk.Tk()
 root.title("Sistema de Gerenciamento - Amazon")
@@ -23,6 +28,9 @@ btn_cliente = tk.Button(root, text="Gerenciar Clientes", command=abrir_cliente, 
 btn_cliente.pack(pady=10)
 
 btn_pedido = tk.Button(root, text="Adicionar Pedido", command=abrir_pedido, width=30)
+btn_pedido.pack(pady=10)
+
+btn_pedido = tk.Button(root, text="Gerenciar Transportadora", command=abrir_transportadora, width=30)
 btn_pedido.pack(pady=10)
 
 btn_consultas = tk.Button(root, text="Consultas SQL", command=abrir_consultas, width=30)
