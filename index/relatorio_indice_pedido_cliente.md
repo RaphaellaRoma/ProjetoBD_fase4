@@ -38,6 +38,9 @@ O tempo de execução reduz significativamente, comprovando a eficácia do índi
 Essa melhoria é perceptível especialmente quando a tabela `pedido` contém muitos registros.
 
 ## Testes
+
+- Teste 1:
 ![Teste 1](Testes/Teste1_pedido_cliente.png)
 
+- Teste 2:
 ![Teste 2](Testes/Teste2_pedido_cliente.png)
