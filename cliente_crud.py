@@ -17,9 +17,13 @@ def janela_cliente():
                 cur.execute("""
                     SELECT * FROM amazon.cliente 
                     WHERE CAST(ClienteID AS TEXT) LIKE %s OR NomeCliente ILIKE %s
+                    ORDER BY NomeCliente
                 """, (f"{filtro}%", f"%{filtro}%"))
             else:
-                cur.execute("SELECT * FROM amazon.cliente")
+                cur.execute("""
+                    SELECT * FROM amazon.cliente
+                    ORDER BY ClienteID
+                """)
             for row in cur.fetchall():
                 tree.insert("", "end", values=row)
             cur.close()
@@ -50,6 +54,8 @@ def janela_cliente():
             cur.close()
             conn.close()
             carregar_dados()
+            limpar_campos()
+            messagebox.showinfo("Sucesso", "Cliente inserido com sucesso.")
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
@@ -67,12 +73,76 @@ def janela_cliente():
             cur.close()
             conn.close()
             carregar_dados()
+            messagebox.showinfo("Sucesso", "Cliente deletado com sucesso.")
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
     def filtrar_clientes():
         termo = entry_filtro.get()
         carregar_dados(termo)
+
+    def preencher_campos(event):
+        item = tree.selection()
+        if not item:
+            return
+        valores = tree.item(item)["values"]
+        entry_nome.delete(0, tk.END)
+        entry_nome.insert(0, valores[1])
+
+        var_assinatura.set(valores[2])
+        entry_rua.delete(0, tk.END)
+        entry_rua.insert(0, valores[3])
+
+        entry_numero.delete(0, tk.END)
+        entry_numero.insert(0, valores[4])
+
+        entry_email.delete(0, tk.END)
+        entry_email.insert(0, valores[5])
+
+        entry_senha.delete(0, tk.END)
+        entry_senha.insert(0, valores[6])
+
+    def limpar_campos():
+        entry_nome.delete(0, tk.END)
+        var_assinatura.set(False)
+        entry_rua.delete(0, tk.END)
+        entry_numero.delete(0, tk.END)
+        entry_email.delete(0, tk.END)
+        entry_senha.delete(0, tk.END)
+        tree.selection_remove(tree.selection())
+
+
+    def atualizar_cliente():
+        item = tree.selection()
+        if not item:
+            messagebox.showwarning("Aviso", "Selecione um cliente para atualizar.")
+            return
+
+        cliente_id = tree.item(item)["values"][0]
+        nome = entry_nome.get()
+        assinatura = var_assinatura.get()
+        rua = entry_rua.get()
+        numero = entry_numero.get()
+        email = entry_email.get()
+        senha = entry_senha.get()
+
+        try:
+            conn = conectar()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE amazon.cliente
+                SET NomeCliente=%s, TerAssinaturaPrime=%s, Rua=%s, Numero=%s, Email=%s, Senha=%s
+                WHERE ClienteID=%s
+            """, (nome, assinatura, rua, numero, email, senha, cliente_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            carregar_dados()
+            limpar_campos()
+            messagebox.showinfo("Sucesso", "Cliente atualizado com sucesso.")
+        except Exception as e:
+            messagebox.showerror("Erro", str(e))
+
 
     # === Formulário ===
     form_frame = tk.Frame(janela)
@@ -109,6 +179,10 @@ def janela_cliente():
 
     tk.Button(btn_frame, text="Inserir Cliente", command=inserir_cliente).pack(side=tk.LEFT, padx=10)
     tk.Button(btn_frame, text="Deletar Selecionado", command=deletar_cliente).pack(side=tk.LEFT, padx=10)
+    tk.Button(btn_frame, text="Atualizar Selecionado", command=atualizar_cliente).pack(side=tk.LEFT, padx=10)
+    tk.Button(btn_frame, text="Limpar Campos", command=limpar_campos).pack(side=tk.LEFT, padx=10)
+
+
 
     # === Filtro ===
     filtro_frame = tk.Frame(janela)
@@ -127,6 +201,10 @@ def janela_cliente():
         tree.heading(col, text=col)
         tree.column(col, width=100)
     tree.pack(expand=True, fill=tk.BOTH)
+
+
+    # VINCULA o clique para preencher os campos
+    tree.bind("<<TreeviewSelect>>", preencher_campos)
 
     carregar_dados()
     janela.mainloop()
