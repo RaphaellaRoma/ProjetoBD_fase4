@@ -44,3 +44,11 @@ WHERE DataPedFeito >= '2025-01-01';
 - Consultas frequentes filtrando por datas recentes ou por períodos.
 - Relatórios gerenciais de pedidos semanais, mensais ou anuais.
 - Situações em que o volume de dados em `amazon.pedido` tende a crescer com o tempo.
+
+## Testes
+
+- Teste 1:
+![Teste 1](Testes/Teste1_pedido_data.png)
+
+- Teste 2:
+![Teste 2](Testes/Teste2_pedido_data.png)
