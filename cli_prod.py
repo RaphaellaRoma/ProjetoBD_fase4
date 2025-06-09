@@ -2,12 +2,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from db_config import conectar 
 
-def janela_cli_loja():
+def janela_cli_prod():
     janela = tk.Toplevel()
-    janela.title("Gerenciar Cliente Avalia Loja")
+    janela.title("Gerenciar Cliente Avalia Produto")
     janela.geometry("900x500")
 
-    def carregar_clientes_lojas():
+    def carregar_clientes_produtos():
         try:
             conn = conectar()
             cur = conn.cursor()
@@ -16,35 +16,35 @@ def janela_cli_loja():
             clientes = cur.fetchall()
             cb_cliente['values'] = [f"{c[0]} - {c[1]}" for c in clientes]
 
-            cur.execute("SELECT LojaID, NomeLoja FROM amazon.loja ORDER BY NomeLoja")
-            lojas = cur.fetchall()
-            cb_loja['values'] = [f"{t[0]} - {t[1]}" for t in lojas]
+            cur.execute("SELECT ProdutoID, NomeProduto FROM amazon.produto ORDER BY NomeProduto")
+            produtos = cur.fetchall()
+            cb_produto['values'] = [f"{p[0]} - {p[1]}" for p in produtos]
 
             cb_filtro_cliente['values'] = cb_cliente['values']
-            cb_filtro_loja['values'] = cb_loja['values']
+            cb_filtro_produto['values'] = cb_produto['values']
 
             cur.close()
             conn.close()
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
-    def carregar_dados(cliente_id=None, loja_id=None):
+    def carregar_dados(cliente_id=None, produto_id=None):
         for item in tree.get_children():
             tree.delete(item)
         try:
             conn = conectar()
             cur = conn.cursor()
-            if cliente_id and loja_id:
+            if cliente_id and produto_id:
                 cur.execute("""
-                    SELECT * FROM amazon.cli_avalia_loja 
-                    WHERE clienteid = %s AND lojaid = %s
-                """, (cliente_id, loja_id))
+                    SELECT * FROM amazon.cli_avalia_prod 
+                    WHERE clienteid = %s AND produtoid = %s
+                """, (cliente_id, produto_id))
             elif cliente_id:
-                cur.execute("SELECT * FROM amazon.cli_avalia_loja WHERE clienteid = %s", (cliente_id,))
-            elif loja_id:
-                cur.execute("SELECT * FROM amazon.cli_avalia_loja WHERE lojaid = %s", (loja_id,))
+                cur.execute("SELECT * FROM amazon.cli_avalia_prod WHERE clienteid = %s", (cliente_id,))
+            elif produto_id:
+                cur.execute("SELECT * FROM amazon.cli_avalia_prod WHERE produtoid = %s", (produto_id,))
             else:
-                cur.execute("SELECT * FROM amazon.cli_avalia_loja")
+                cur.execute("SELECT * FROM amazon.cli_avalia_prod")
             for row in cur.fetchall():
                 tree.insert("", "end", values=row)
             cur.close()
@@ -57,27 +57,27 @@ def janela_cli_loja():
         data = entry_data.get()
         comentario = entry_comentario.get()
         cliente = cb_cliente.get()
-        loja = cb_loja.get()
+        produto = cb_produto.get()
 
-        if not (nota and data and cliente and loja):
+        if not (nota and data and cliente and produto):
             messagebox.showwarning("Atenção", "Preencha todos os campos obrigatórios.")
             return
 
         try:
             cliente_id = int(cliente.split(" - ")[0])
-            loja_id = int(loja.split(" - ")[0])
+            produto_id = int(produto.split(" - ")[0])
         except:
-            messagebox.showwarning("Erro", "Selecione cliente e loja válidos.")
+            messagebox.showwarning("Erro", "Selecione cliente e produto válidos.")
             return
 
         try:
             conn = conectar()
             cur = conn.cursor()
             cur.execute("""
-                INSERT INTO amazon.cli_avalia_loja 
-                (ClienteID, LojaID, nota, data, comentario)
+                INSERT INTO amazon.cli_avalia_prod 
+                (ClienteID, ProdutoID, nota, data, comentario)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (cliente_id, loja_id, nota, data, comentario))
+            """, (cliente_id, produto_id, nota, data, comentario))
             conn.commit()
             cur.close()
             conn.close()
@@ -93,11 +93,11 @@ def janela_cli_loja():
             messagebox.showwarning("Aviso", "Selecione uma avaliação para deletar.")
             return
         cliente_id = tree.item(item)["values"][0]
-        loja_id = tree.item(item)["values"][1]
+        produto_id = tree.item(item)["values"][1]
         try:
             conn = conectar()
             cur = conn.cursor()
-            cur.execute("DELETE FROM amazon.cli_avalia_loja WHERE clienteid = %s AND LojaID = %s", (cliente_id, loja_id))
+            cur.execute("DELETE FROM amazon.cli_avalia_prod WHERE clienteid = %s AND produtoID = %s", (cliente_id, produto_id))
             conn.commit()
             cur.close()
             conn.close()
@@ -115,9 +115,9 @@ def janela_cli_loja():
 
         try:
             cliente_id = int(cb_cliente.get().split(" - ")[0])
-            loja_id = int(cb_loja.get().split(" - ")[0])
+            produto_id = int(cb_produto.get().split(" - ")[0])
         except:
-            messagebox.showwarning("Erro", "Selecione cliente e loja válidos.")
+            messagebox.showwarning("Erro", "Selecione cliente e produto válidos.")
             return
 
         nota = entry_nota.get()
@@ -132,10 +132,10 @@ def janela_cli_loja():
             conn = conectar()
             cur = conn.cursor()
             cur.execute("""
-                UPDATE amazon.cli_avalia_loja 
+                UPDATE amazon.cli_avalia_prod 
                 SET nota = %s, data = %s, comentario = %s
-                WHERE clienteid = %s AND lojaid = %s
-            """, (nota, data, comentario, cliente_id, loja_id))
+                WHERE clienteid = %s AND produtoid = %s
+            """, (nota, data, comentario, cliente_id, produto_id))
             conn.commit()
             cur.close()
             conn.close()
@@ -147,31 +147,31 @@ def janela_cli_loja():
 
     def filtrar_avaliacoes():
         cliente = cb_filtro_cliente.get()
-        loja = cb_filtro_loja.get()
+        produto = cb_filtro_produto.get()
 
         cliente_id = None 
-        loja_id = None
+        produto_id = None
 
         if cliente:
             try:
                 cliente_id = int(cliente.split(" - ")[0])
             except:
                 pass
-        if loja:
+        if produto:
             try:
-                loja_id = int(loja.split(" - ")[0])
+                produto_id = int(produto.split(" - ")[0])
             except:
                 pass
 
-        carregar_dados(cliente_id, loja_id)
+        carregar_dados(cliente_id, produto_id)
 
     def preencher_campos(event):
         item = tree.selection()
         if not item:
             return
         valores = tree.item(item)["values"]
-        cb_cliente.set(f"{valores[0]}")  # ClienteID
-        cb_loja.set(f"{valores[1]}")     # LojaID
+        cb_cliente.set(f"{valores[0]}") 
+        cb_produto.set(f"{valores[1]}")    
         entry_nota.delete(0, tk.END)
         entry_nota.insert(0, valores[2])
         entry_data.delete(0, tk.END)
@@ -181,12 +181,12 @@ def janela_cli_loja():
 
     def limpar_campos():
         cb_cliente.set("")
-        cb_loja.set("")
+        cb_produto.set("")
         entry_nota.delete(0, tk.END)
         entry_data.delete(0, tk.END)
         entry_comentario.delete(0, tk.END)
         cb_filtro_cliente.set("")
-        cb_filtro_loja.set("")
+        cb_filtro_produto.set("")
         tree.selection_remove(tree.selection())
 
     # === Formulário ===
@@ -197,9 +197,9 @@ def janela_cli_loja():
     cb_cliente = ttk.Combobox(form_frame, width=25)
     cb_cliente.grid(row=0, column=1)
 
-    tk.Label(form_frame, text="Loja:").grid(row=0, column=2)
-    cb_loja = ttk.Combobox(form_frame, width=25)
-    cb_loja.grid(row=0, column=3)
+    tk.Label(form_frame, text="Produto:").grid(row=0, column=2)
+    cb_produto = ttk.Combobox(form_frame, width=25)
+    cb_produto.grid(row=0, column=3)
 
     tk.Label(form_frame, text="Nota:").grid(row=1, column=0)
     entry_nota = tk.Entry(form_frame, width=28)
@@ -230,14 +230,14 @@ def janela_cli_loja():
     cb_filtro_cliente = ttk.Combobox(filtro_frame, width=30)
     cb_filtro_cliente.pack(side=tk.LEFT, padx=5)
 
-    tk.Label(filtro_frame, text="Filtrar por Loja:").pack(side=tk.LEFT)
-    cb_filtro_loja = ttk.Combobox(filtro_frame, width=30)
-    cb_filtro_loja.pack(side=tk.LEFT, padx=5)
+    tk.Label(filtro_frame, text="Filtrar por Produto:").pack(side=tk.LEFT)
+    cb_filtro_produto = ttk.Combobox(filtro_frame, width=30)
+    cb_filtro_produto.pack(side=tk.LEFT, padx=5)
 
     tk.Button(filtro_frame, text="Buscar", command=filtrar_avaliacoes).pack(side=tk.LEFT)
 
     # === Tabela ===
-    colunas = ("ClienteID", "LojaID", "nota", "data", "comentario")
+    colunas = ("ClienteID", "ProdutoID", "nota", "data", "comentario")
     tree = ttk.Treeview(janela, columns=colunas, show="headings")
     for col in colunas:
         tree.heading(col, text=col)
@@ -247,6 +247,6 @@ def janela_cli_loja():
     # Bind para preencher os campos ao selecionar uma linha
     tree.bind("<<TreeviewSelect>>", preencher_campos)
 
-    carregar_clientes_lojas()
+    carregar_clientes_produtos()
     carregar_dados()
     janela.mainloop()
