@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from db_config import conectar
+from db_config import conectar 
 
 def janela_pedido():
     janela = tk.Toplevel()
