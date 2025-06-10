@@ -162,7 +162,7 @@ def janela_produto():
     form_frame.pack(pady=10)
 
     tk.Label(form_frame, text="Tipo de Produto:").grid(row=0, column=0)
-    cb_tipo = ttk.Combobox(form_frame, values=["Eletrônico", "Roupas", "Livros", "Outros"], width=25)
+    cb_tipo = ttk.Combobox(form_frame, values=["Eletrônico", "Roupas", "Livros", "Brinquedos", "Outros"], width=25)
     cb_tipo.grid(row=0, column=1)
 
     tk.Label(form_frame, text="Nome do Produto:").grid(row=0, column=2)
