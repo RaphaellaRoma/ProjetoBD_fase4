@@ -174,7 +174,7 @@ def janela_pedido():
     form_frame.pack(pady=10)
 
     tk.Label(form_frame, text="Forma de Pagamento:").grid(row=0, column=0)
-    entry_formapag = ttk.Combobox(form_frame, values=["Boleto", "Pix", "Cartão"], state="readonly", width=25)
+    entry_formapag = ttk.Combobox(form_frame, values=["Boleto", "Pix", "Cartão"], width=25)
     entry_formapag.grid(row=0, column=1)
 
     tk.Label(form_frame, text="Desconto:").grid(row=0, column=2)
