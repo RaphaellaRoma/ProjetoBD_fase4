@@ -10,7 +10,6 @@ from transportadora_crud import janela_transportadora
 from loja_crud import janela_loja
 from cli_loja import janela_cli_loja
 from cli_prod import janela_cli_prod
-# O nome do arquivo foi deduzido da conversa anterior, ajuste se necessário
 from ped_prod_crud import janela_itens_pedido 
 from ped_quant_crud import janela_ped_quant
 

@@ -28,9 +28,9 @@ def janela_produto():
             if filtro:
                 cur.execute("""
                     SELECT * FROM amazon.produto 
-                    WHERE CAST(ProdutoID AS TEXT) LIKE %s
+                    WHERE CAST(ProdutoID AS TEXT) LIKE %s OR TipoProduto ILIKE %s OR NomeProduto ILIKE %s
                     ORDER BY ProdutoID
-                """, (f"{filtro}%",))
+                """, (f"{filtro}%",f"{filtro}%",f"{filtro}%"))
             else:
                 cur.execute("SELECT * FROM amazon.produto ORDER BY ProdutoID")
             for row in cur.fetchall():
