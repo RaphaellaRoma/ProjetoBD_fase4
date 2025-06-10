@@ -9,9 +9,9 @@ from produto_crud import janela_produto
 from transportadora_crud import janela_transportadora
 from loja_crud import janela_loja
 from cli_loja import janela_cli_loja
+from cli_prod import janela_cli_prod
 from ped_prod_crud import janela_itens_pedido
 # from ped_quant_crud import janela_ped_quant
-from consultas import janela_consultas
 
 def abrir_cliente(): janela_cliente()
 def abrir_pedido(): janela_pedido()
@@ -20,14 +20,6 @@ def abrir_transportadora(): janela_transportadora()
 def abrir_loja(): janela_loja()
 def abrir_cli_loja(): janela_cli_loja()
 def abrir_cli_prod(): janela_cli_prod()
-# def abrir_quant_prod(): 
-# def abrir_ped_pod(): 
-
-def abrir_ped_prod(): 
-    janela_itens_pedido()
-
-# def abrir_ped_quant():
-#     janela_ped_quant()
 
 def abrir_ped_prod(): 
     janela_itens_pedido()
@@ -81,8 +73,8 @@ botoes_info = [
     ("Pedidos", abrir_pedido),
     ("Avaliações ( cliente-loja )", abrir_cli_loja),
     ("Avaliações ( cliente-produto )", abrir_cli_prod),
-    #("Quantidade de Produtos", abrir_quant_prod),
-    #("Pedido - Produto", abrir_ped_pod),
+    # ("Quantidade de Produtos", abrir_quant_prod),
+    ("Pedido - Produto", abrir_ped_prod),
 ]
 
 # === Criar e posicionar botões ===
