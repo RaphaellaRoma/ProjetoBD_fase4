@@ -10,8 +10,9 @@ from transportadora_crud import janela_transportadora
 from loja_crud import janela_loja
 from cli_loja import janela_cli_loja
 from cli_prod import janela_cli_prod
-from ped_prod_crud import janela_itens_pedido
-# from ped_quant_crud import janela_ped_quant
+# O nome do arquivo foi deduzido da conversa anterior, ajuste se necessário
+from ped_prod_crud import janela_itens_pedido 
+from ped_quant_crud import janela_ped_quant
 
 def abrir_cliente(): janela_cliente()
 def abrir_pedido(): janela_pedido()
@@ -24,12 +25,12 @@ def abrir_cli_prod(): janela_cli_prod()
 def abrir_ped_prod(): 
     janela_itens_pedido()
 
-# def abrir_ped_quant():
-#     janela_ped_quant()
+def abrir_ped_quant():
+    janela_ped_quant()
 
 root = tk.Tk()
 root.title("Sistema de Gerenciamento - Amazon")
-root.geometry("900x500")
+root.geometry("950x550") # Aumentei um pouco a altura para o novo botão
 
 # === Logo ===
 imagem = Image.open("amazon_logo.png")
@@ -47,7 +48,7 @@ style.theme_use("clam")
 style.configure("TButton",
     font=("Segoe UI", 13),
     padding=10,
-    width=25,
+    width=28, # Aumentei a largura para caber os novos textos
     relief="flat",
     background="#232F3E",
     foreground="white"
@@ -64,17 +65,17 @@ def criar_botao(texto, comando):
 btn_frame = tk.Frame(root)
 btn_frame.pack(pady=20)
 
-# === Lista com textos e comandos ===
+# === Lista com textos e comandos (ATUALIZADA) ===
 botoes_info = [
     ("Clientes", abrir_cliente),
     ("Lojas", abrir_loja),
     ("Transportadoras", abrir_transportadora),
     ("Produtos", abrir_produto),
     ("Pedidos", abrir_pedido),
-    ("Avaliações ( cliente-loja )", abrir_cli_loja),
-    ("Avaliações ( cliente-produto )", abrir_cli_prod),
-    # ("Quantidade de Produtos", abrir_quant_prod),
-    ("Pedido - Produto", abrir_ped_prod),
+    ("Itens do Pedido (Pedido-Produto)", abrir_ped_prod),
+    ("Quantidade do Pedido", abrir_ped_quant),
+    ("Avaliações (cliente-loja)", abrir_cli_loja),
+    ("Avaliações (cliente-produto)", abrir_cli_prod),
 ]
 
 # === Criar e posicionar botões ===
