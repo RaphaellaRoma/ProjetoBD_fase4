@@ -5,9 +5,19 @@ from db_config import conectar
 def janela_produto():
     janela = tk.Toplevel()
     janela.title("Gerenciar Produtos")
-    janela.geometry("900x500")
+    janela.geometry("1000x500")
 
-    # --- FUNÇÕES DE LÓGICA ---
+    def carregar_lojas():
+        try:
+            conn = conectar()
+            cur = conn.cursor()
+            cur.execute("SELECT LojaID, NomeLoja FROM amazon.loja ORDER BY NomeLoja")
+            lojas = cur.fetchall()
+            cb_loja['values'] = [f"{l[0]} - {l[1]}" for l in lojas]
+            cur.close()
+            conn.close()
+        except Exception as e:
+            messagebox.showerror("Erro", str(e))
 
     def carregar_dados(filtro=None):
         for item in tree.get_children():
@@ -15,188 +25,194 @@ def janela_produto():
         try:
             conn = conectar()
             cur = conn.cursor()
-            query = "SELECT * FROM amazon.produto"
-            params = ()
-
             if filtro:
-                filtro_texto = f"%{filtro}%"
-                query += """
-                    WHERE CAST(produtoid AS TEXT) LIKE %s 
-                    OR nomeproduto ILIKE %s 
-                    OR tipoproduto ILIKE %s 
-                    OR descricao ILIKE %s
-                """
-                params = (f"{filtro}%", filtro_texto, filtro_texto, filtro_texto)
-            
-            query += " ORDER BY produtoid"
-            cur.execute(query, params)
-            
+                cur.execute("""
+                    SELECT * FROM amazon.produto 
+                    WHERE CAST(ProdutoID AS TEXT) LIKE %s
+                    ORDER BY ProdutoID
+                """, (f"{filtro}%",))
+            else:
+                cur.execute("SELECT * FROM amazon.produto ORDER BY ProdutoID")
             for row in cur.fetchall():
                 tree.insert("", "end", values=row)
-            
             cur.close()
             conn.close()
         except Exception as e:
-            messagebox.showerror("Erro ao Carregar Dados", str(e))
+            messagebox.showerror("Erro", str(e))
+
+    def limpar_campos():
+        cb_tipo.set("")
+        entry_nome.delete(0, tk.END)
+        entry_desc.delete(0, tk.END)
+        entry_preco.delete(0, tk.END)
+        entry_avaliacao.delete(0, tk.END)
+        cb_loja.set("")
+        tree.selection_remove(tree.selection())
 
     def inserir_produto():
+        tipo = cb_tipo.get()
         nome = entry_nome.get()
-        tipo = entry_tipo.get()
-        descricao_val = entry_descricao.get()
-        preco_val = entry_preco.get() 
-        loja_id = entry_loja_id.get()
+        descricao = entry_desc.get()
+        preco = entry_preco.get()
+        avaliacao = entry_avaliacao.get()
+        loja = cb_loja.get()
 
-        if not all([nome, tipo, preco_val, loja_id]):
-            messagebox.showwarning("Atenção", "Preencha pelo menos Nome, Tipo, Preço e LojaID.")
+        if not (tipo and nome and preco and loja):
+            messagebox.showwarning("Atenção", "Preencha os campos obrigatórios.")
+            return
+
+        try:
+            loja_id = int(loja.split(" - ")[0])
+        except:
+            messagebox.showwarning("Erro", "Selecione uma loja válida.")
             return
 
         try:
             conn = conectar()
             cur = conn.cursor()
             cur.execute("""
-                INSERT INTO amazon.produto (nomeproduto, tipoproduto, descricao, preco, lojaid)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (nome, tipo, descricao_val, float(preco_val), int(loja_id)))
+                INSERT INTO amazon.produto 
+                (TipoProduto, NomeProduto, Descricao, Preco, AvaliacaoGeral, LojaID)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (tipo, nome, descricao, preco, avaliacao, loja_id))
             conn.commit()
             cur.close()
             conn.close()
-            limpar_campos()
             carregar_dados()
-            messagebox.showinfo("Sucesso", "Produto inserido com sucesso!")
+            limpar_campos()
         except Exception as e:
-            messagebox.showerror("Erro ao Inserir", str(e))
-
-    def deletar_produto():
-        item_selecionado = tree.selection()
-        if not item_selecionado:
-            messagebox.showwarning("Aviso", "Selecione um produto para deletar.")
-            return
-        
-        produto_id = tree.item(item_selecionado)["values"][0]
-        
-        if messagebox.askyesno("Confirmar Exclusão", f"Tem certeza que deseja deletar o produto ID {produto_id}?"):
-            try:
-                conn = conectar()
-                cur = conn.cursor()
-                cur.execute("DELETE FROM amazon.produto WHERE produtoid = %s", (produto_id,))
-                conn.commit()
-                cur.close()
-                conn.close()
-                limpar_campos()
-                carregar_dados()
-            except Exception as e:
-                messagebox.showerror("Erro ao Deletar", str(e))
+            messagebox.showerror("Erro", str(e))
 
     def atualizar_produto():
-        item_selecionado = tree.selection()
-        if not item_selecionado:
-            messagebox.showwarning("Aviso", "Selecione um produto da lista para atualizar.")
+        item = tree.selection()
+        if not item:
+            messagebox.showwarning("Aviso", "Selecione um produto para atualizar.")
             return
+        produto_id = tree.item(item)["values"][0]
 
+        tipo = cb_tipo.get()
         nome = entry_nome.get()
-        tipo = entry_tipo.get()
-        descricao_val = entry_descricao.get()
-        preco_val = entry_preco.get()
-        loja_id = entry_loja_id.get()
+        descricao = entry_desc.get()
+        preco = entry_preco.get()
+        avaliacao = entry_avaliacao.get()
+        loja = cb_loja.get()
 
-        if not all([nome, tipo, preco_val, loja_id]):
-            messagebox.showwarning("Atenção", "Todos os campos devem ser preenchidos para atualizar.")
+        try:
+            loja_id = int(loja.split(" - ")[0])
+        except:
+            messagebox.showwarning("Erro", "Selecione uma loja válida.")
             return
-
-        produto_id = tree.item(item_selecionado)["values"][0]
 
         try:
             conn = conectar()
             cur = conn.cursor()
             cur.execute("""
                 UPDATE amazon.produto 
-                SET nomeproduto = %s, tipoproduto = %s, descricao = %s, preco = %s, lojaid = %s
-                WHERE produtoid = %s
-            """, (nome, tipo, descricao_val, float(preco_val), int(loja_id), produto_id))
+                SET TipoProduto = %s, NomeProduto = %s, Descricao = %s,
+                    Preco = %s, AvaliacaoGeral = %s, LojaID = %s
+                WHERE ProdutoID = %s
+            """, (tipo, nome, descricao, preco, avaliacao, loja_id, produto_id))
             conn.commit()
             cur.close()
             conn.close()
-            limpar_campos()
             carregar_dados()
-            messagebox.showinfo("Sucesso", "Produto atualizado com sucesso!")
+            limpar_campos()
         except Exception as e:
-            messagebox.showerror("Erro ao Atualizar", str(e))
+            messagebox.showerror("Erro", str(e))
+
+    def deletar_produto():
+        item = tree.selection()
+        if not item:
+            messagebox.showwarning("Aviso", "Selecione um produto para deletar.")
+            return
+        produto_id = tree.item(item)["values"][0]
+        try:
+            conn = conectar()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM amazon.produto WHERE ProdutoID = %s", (produto_id,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            carregar_dados()
+            limpar_campos()
+        except Exception as e:
+            messagebox.showerror("Erro", str(e))
+
+    def filtrar_produtos(event=None):
+        termo = entry_filtro.get()
+        carregar_dados(termo)
 
     def preencher_campos(event):
-        limpar_campos(limpar_selecao=False)
-        item_selecionado = tree.selection()
-        if not item_selecionado:
-            return
-        valores = tree.item(item_selecionado)["values"]
-        entry_nome.insert(0, valores[1])
-        entry_tipo.insert(0, valores[2])
-        entry_descricao.insert(0, valores[3])
-        entry_preco.insert(0, valores[4])
-        entry_loja_id.insert(0, valores[6])
+        item = tree.selection()
+        if item:
+            valores = tree.item(item)["values"]
+            cb_tipo.set(valores[1])
+            entry_nome.delete(0, tk.END)
+            entry_nome.insert(0, valores[2])
+            entry_desc.delete(0, tk.END)
+            entry_desc.insert(0, valores[3])
+            entry_preco.delete(0, tk.END)
+            entry_preco.insert(0, valores[4])
+            entry_avaliacao.delete(0, tk.END)
+            entry_avaliacao.insert(0, valores[5])
+            cb_loja.set(f"{valores[6]}")
 
-    def limpar_campos(limpar_selecao=True):
-        entry_nome.delete(0, tk.END)
-        entry_tipo.delete(0, tk.END)
-        entry_descricao.delete(0, tk.END)
-        entry_preco.delete(0, tk.END)
-        entry_loja_id.delete(0, tk.END)
-        entry_nome.focus()
-        if limpar_selecao and tree.selection():
-            tree.selection_remove(tree.selection()[0])
-
-    # --- INTERFACE GRÁFICA (UI) ---
-
+    # === Formulário ===
     form_frame = tk.Frame(janela)
     form_frame.pack(pady=10)
 
-    tk.Label(form_frame, text="Nome:").grid(row=0, column=0, padx=5, pady=5)
-    entry_nome = tk.Entry(form_frame)
-    entry_nome.grid(row=0, column=1, padx=5, pady=5)
-    tk.Label(form_frame, text="Tipo:").grid(row=0, column=2, padx=5, pady=5)
-    entry_tipo = tk.Entry(form_frame)
-    entry_tipo.grid(row=0, column=3, padx=5, pady=5)
+    tk.Label(form_frame, text="Tipo de Produto:").grid(row=0, column=0)
+    cb_tipo = ttk.Combobox(form_frame, values=["Eletrônico", "Roupas", "Livros", "Outros"], width=25)
+    cb_tipo.grid(row=0, column=1)
 
-    tk.Label(form_frame, text="Descrição:").grid(row=1, column=0, padx=5, pady=5)
-    entry_descricao = tk.Entry(form_frame)
-    entry_descricao.grid(row=1, column=1, padx=5, pady=5)
-    tk.Label(form_frame, text="Preço:").grid(row=1, column=2, padx=5, pady=5)
-    entry_preco = tk.Entry(form_frame)
-    entry_preco.grid(row=1, column=3, padx=5, pady=5)
+    tk.Label(form_frame, text="Nome do Produto:").grid(row=0, column=2)
+    entry_nome = tk.Entry(form_frame, width=28)
+    entry_nome.grid(row=0, column=3)
 
-    tk.Label(form_frame, text="Loja ID:").grid(row=2, column=0, padx=5, pady=5)
-    entry_loja_id = tk.Entry(form_frame)
-    entry_loja_id.grid(row=2, column=1, padx=5, pady=5)
+    tk.Label(form_frame, text="Descrição:").grid(row=1, column=0)
+    entry_desc = tk.Entry(form_frame, width=28)
+    entry_desc.grid(row=1, column=1)
 
+    tk.Label(form_frame, text="Preço:").grid(row=1, column=2)
+    entry_preco = tk.Entry(form_frame, width=28)
+    entry_preco.grid(row=1, column=3)
+
+    tk.Label(form_frame, text="Avaliação Geral:").grid(row=2, column=0)
+    entry_avaliacao = tk.Entry(form_frame, width=28)
+    entry_avaliacao.grid(row=2, column=1)
+
+    tk.Label(form_frame, text="Loja:").grid(row=2, column=2)
+    cb_loja = ttk.Combobox(form_frame, width=25)
+    cb_loja.grid(row=2, column=3)
+
+    # === Botões ===
     btn_frame = tk.Frame(janela)
-    btn_frame.pack(pady=5)
+    btn_frame.pack(pady=10)
+
     tk.Button(btn_frame, text="Inserir Produto", command=inserir_produto).pack(side=tk.LEFT, padx=10)
-    tk.Button(btn_frame, text="Deletar Selecionado", command=deletar_produto).pack(side=tk.LEFT, padx=10)
     tk.Button(btn_frame, text="Atualizar Selecionado", command=atualizar_produto).pack(side=tk.LEFT, padx=10)
+    tk.Button(btn_frame, text="Deletar Selecionado", command=deletar_produto).pack(side=tk.LEFT, padx=10)
     tk.Button(btn_frame, text="Limpar Campos", command=limpar_campos).pack(side=tk.LEFT, padx=10)
 
+    # === Filtro ===
     filtro_frame = tk.Frame(janela)
     filtro_frame.pack(pady=10)
-    tk.Label(filtro_frame, text="Filtrar por Nome ou ID:").pack(side=tk.LEFT)
+
+    tk.Label(filtro_frame, text="Filtrar por ID:").pack(side=tk.LEFT)
     entry_filtro = tk.Entry(filtro_frame)
     entry_filtro.pack(side=tk.LEFT, padx=5)
-    entry_filtro.bind("<KeyRelease>", lambda event: carregar_dados(entry_filtro.get()))
+    entry_filtro.bind("<KeyRelease>", filtrar_produtos)
+    tk.Button(filtro_frame, text="Buscar", command=filtrar_produtos).pack(side=tk.LEFT)
 
-    tree_frame = tk.Frame(janela)
-    tree_frame.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
-    
-    colunas = ("produtoid", "nomeproduto", "tipoproduto", "descricao", "preco", "avaliaçãogeral", "lojaid")
-    tree = ttk.Treeview(tree_frame, columns=colunas, show="headings")
-    
-    vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
-    vsb.pack(side='right', fill='y')
-    tree.configure(yscrollcommand=vsb.set)
-    
+    # === Tabela ===
+    colunas = ("ProdutoID", "TipoProduto", "NomeProduto", "Descricao", "Preco", "AvaliacaoGeral", "LojaID")
+    tree = ttk.Treeview(janela, columns=colunas, show="headings")
     for col in colunas:
-        tree.heading(col, text=col.capitalize())
-        tree.column(col, width=120, anchor='w')
-    
-    tree.pack(expand=True, fill=tk.BOTH)
-    
+        tree.heading(col, text=col)
+        tree.column(col, width=140 if col != "Descricao" else 200)
     tree.bind("<<TreeviewSelect>>", preencher_campos)
+    tree.pack(expand=True, fill=tk.BOTH)
 
+    carregar_lojas()
     carregar_dados()
+    janela.mainloop()
