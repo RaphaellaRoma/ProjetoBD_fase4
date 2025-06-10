@@ -198,7 +198,7 @@ def janela_produto():
     filtro_frame = tk.Frame(janela)
     filtro_frame.pack(pady=10)
 
-    tk.Label(filtro_frame, text="Filtrar por ID:").pack(side=tk.LEFT)
+    tk.Label(filtro_frame, text="Filtrar (ID, Tipo ou Nome):").pack(side=tk.LEFT)
     entry_filtro = tk.Entry(filtro_frame)
     entry_filtro.pack(side=tk.LEFT, padx=5)
     entry_filtro.bind("<KeyRelease>", filtrar_produtos)
